@@ -50,29 +50,47 @@ Services are open for extension through interfaces
  5. Dependency Inversion Principle (DIP)
  High-level modules depend on abstractions (interfaces)
  Dependency injection throughout
+
+
  Project Structure
  BreweryApi/
  ├── Controllers/
  │   ├── V1/BreweriesController.cs    # API Version 1
  │   ├── V2/BreweriesController.cs    # API Version 2
  │   └── AuthController.cs            # Authentication
+ 
+ 
  ├── Data/
  │   └── BreweryDbContext.cs          # EF Core DbContext
+ 
+ 
  ├── Interfaces/
  │   ├── IBreweryService.cs           # Business logic contract
  │   ├── IBreweryRepository.cs        # Data access contract
  │   └── IBreweryDataService.cs       # External API contract
+ 
+ 
  ├── Middleware/
  │   └── ErrorHandlingMiddleware.cs   # Global exception handling
+ 
+ 
  ├── Models/
  │   └── Brewery.cs                   # Domain models & DTOs
+ 
+ 
  ├── Services/
  │   ├── BreweryService.cs            # Business logic implementation
  │   ├── BreweryRepository.cs         # Data access implementation
  │   ├── BreweryDataService.cs        # External API client
  │   └── BreweryDataSyncService.cs    # Background sync service
+ 
+ 
  ├── Program.cs                       # Application entry point
+ 
+ 
  ├── appsettings.json                 # Configuration
+ 
+ 
  └── BreweryApi.csproj               # Project file
 
 
@@ -94,12 +112,15 @@ Serilog - Structured logging
 HTTPS: https://localhost:7001
 HTTP: http://localhost:5001
 Swagger UI: https://localhost:7001/swagger
+
  First-Time Setup
  1. Generate an authentication token
  bash
  curl -X POST https://localhost:7001/api/auth/token \
   -H "Content-Type: application/json" \
   -d '{"username":"demo","password":"demo123"}'
+
+
  Response:
  json
  {
@@ -107,7 +128,10 @@ Swagger UI: https://localhost:7001/swagger
  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
  "expiresIn": 3600,
  "tokenType": "Bearer"
- 2. Use the token in subsequent requests
+
+ 
+ 3. Use the token in subsequent requests
+    
  bash
  curl -X GET https://localhost:7001/api/v1/breweries \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
@@ -116,22 +140,27 @@ Swagger UI: https://localhost:7001/swagger
  Authentication
  POST /api/auth/token
  Generate a JWT token for API access.
+ 
  Request:
 json
  {
  }
  "username": "demo",
  "password": "demo123"
+ 
  Response:
  json
  {
  }
+ 
  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
  "expiresIn": 3600,
  "tokenType": "Bearer"
  Brewery Endpoints (V1)
  GET /api/v1/breweries
  Get paginated list of breweries with filtering and sorting.
+
+ 
  Query Parameters:
  searchTerm (string, optional): Search in name, city, or state
  city (string, optional): Filter by city
@@ -142,9 +171,13 @@ json
  pageSize (int, default: 50): Items per page
  userLatitude (double, optional): User latitude for distance calculation
  userLongitude (double, optional): User longitude for distance calculation
+
+ 
  Example Request:
  bash
  GET /api/v1/breweries?searchTerm=IPA&sortBy=name&page=1&pageSize=20
+
+ 
  Response:
  json
 {
@@ -168,8 +201,11 @@ json
  "hasPreviousPage": false,
  "hasNextPage": true
  }
+
+ 
  GET /api/v1/breweries/{id}
  Get a specific brewery by ID.
+ 
  Response:
  json
  {
@@ -183,13 +219,18 @@ json
  "websiteUrl": "http://www.405brewing.com",
  "breweryType": "micro"
  GET /api/v1/breweries/autocomplete
+
+ 
 Autocomplete search for brewery names.
  Query Parameters:
  term (string, required): Search term
  limit (int, default: 10): Maximum results
+
+ 
  Example Request:
  bash
  GET /api/v1/breweries/autocomplete?term=stone&limit=5
+ 
  Response:
  json
  [
@@ -209,8 +250,11 @@ Autocomplete search for brewery names.
 
 
  Design Decisions
+ 
  1. Caching Strategy
  Decision: Two-tier caching with in-memory cache and database
+
+
  Reasoning:
  In-memory cache provides fast response times (microseconds)
  Database cache persists across application restarts
@@ -227,13 +271,19 @@ Implementation:
  // Fallback to database
  var breweries = await _context.Breweries.ToListAsync();
  _cache.Set(CacheKey, breweries, TimeSpan.FromMinutes(10));
+
+ 
  2. Data Mapping/Transformation
  Decision: Explicit mapping from source API to generic domain model
+
+
  Reasoning:
  Decouples internal model from external API changes
  Allows for data cleansing and normalization
  Enables easy switching of data sources
  Follows DTOs pattern for API responses
+
+ 
  Implementation:
  csharp
  private Brewery MapToBrewery(OpenBreweryDbResponse source)
@@ -247,8 +297,3 @@ Implementation:
  // ... transformation logic
  };
  }
- 3. Distance Calculation
- Decision: Haversine formula for geographic distance
- Reasoning:
- Industry-standard formula for calculating distances
-Accurate for short to
